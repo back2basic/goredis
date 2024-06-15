@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"goredis/client"
@@ -8,7 +9,23 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/tidwall/resp"
 )
+
+func TestHelloServer(t *testing.T) {
+	buf := &bytes.Buffer{}
+	rw := resp.NewWriter(buf)
+	rw.WriteString("OK")
+	fmt.Println(buf.String())
+
+	in := map[string]string{
+		"first":  "1",
+		"second": "2",
+	}
+	out := respWriteMap(in)
+	fmt.Println(out)
+}
 
 func TestServerWithMultipleClients(t *testing.T) {
 	server := NewServer(Config{})
