@@ -1,3 +1,3 @@
 # goredis
 
-- redis in go
+- redis clone - learning go
