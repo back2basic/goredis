@@ -10,8 +10,52 @@ import (
 	"testing"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/tidwall/resp"
 )
+
+func TestOfficialRedisClient(t *testing.T) {
+	listenaddr := ":5001"
+	server := NewServer(Config{
+		ListenAddr: listenaddr,
+	})
+	go func() {
+		log.Fatal(server.Start())
+	}()
+	time.Sleep(1 * time.Second)
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("localhost%s", ":5001"),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	// key := "foo"
+	// val := "bar"
+
+	testCases := map[string]string{
+		"foo":  "bar",
+		"r":    "vh",
+		"your": "mom",
+		"step": "dad",
+	}
+
+	for key, val := range testCases {
+		if err := rdb.Set(context.Background(), key, val, 0).Err(); err != nil {
+			t.Fatal(err)
+		}
+
+		newVal, err := rdb.Get(context.Background(), key).Result()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if newVal != val {
+			t.Fatalf("expected %s, got %s", val, newVal)
+		}
+
+	}
+}
 
 func TestHelloServer(t *testing.T) {
 	buf := &bytes.Buffer{}

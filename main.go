@@ -6,6 +6,8 @@ import (
 	"log"
 	"log/slog"
 	"net"
+
+	"github.com/tidwall/resp"
 )
 
 const defaultListenAddr = ":5001"
@@ -62,29 +64,52 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) handleMessage(msg Message) error {
+
+	// slog.Info("got message", "type", reflect.TypeOf(msg.cmd))
 	switch v := msg.cmd.(type) {
+	case ClientCommand:
+		if err := resp.
+			NewWriter(msg.peer.conn).
+			WriteString("OK"); err != nil {
+			return err
+		}
 	case SetCommand:
-		return s.kv.Set(v.key, v.val)
+		if err := s.kv.Set(v.key, v.val); err != nil {
+			return err
+		}
+		if err := resp.
+			NewWriter(msg.peer.conn).
+			WriteString("OK"); err != nil {
+			return err
+		}
 	case GetCommand:
 		val, ok := s.kv.Get(v.key)
 		if !ok {
 			return fmt.Errorf("key not found")
 		}
-		_, err := msg.peer.Send(val)
-		if err != nil {
-			return fmt.Errorf("peer send error: %s", err)
+		if err := resp.
+			NewWriter(msg.peer.conn).
+			WriteString(string(val)); err != nil {
+			return err
 		}
+		// _, err := msg.peer.Send(val)
+		// if err != nil {
+		// 	return fmt.Errorf("peer send error: %s", err)
+		// }
 	case HelloCommand:
-		fmt.Println("hello from client")
+		// fmt.Println("hello from client")
 		spec := map[string]string{
-			"server": "goredis",
-			"role":   "master",
+			"server":  "redis",
+			"version": "6.0.0",
+			"proto":   "3",
+			"mode":    "standalone",
+			"role":    "master",
 		}
 		_, err := msg.peer.Send(respWriteMap(spec))
 		if err != nil {
 			return fmt.Errorf("peer send error: %s", err)
 		}
-		fmt.Println("hello send from server")
+		// fmt.Println("hello send from server")
 	}
 	return nil
 }
