@@ -14,6 +14,49 @@ import (
 	"github.com/tidwall/resp"
 )
 
+func TestRedisTTL(t *testing.T) {
+	listenaddr := ":5001"
+	server := NewServer(Config{
+		ListenAddr: listenaddr,
+	})
+	go func() {
+		log.Fatal(server.Start())
+	}()
+	time.Sleep(1 * time.Second)
+
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("localhost%s", ":5001"),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	key := "foo"
+	val := "bar"
+
+	if err := rdb.Set(context.Background(), key, val, 10*time.Second).Err(); err != nil {
+		t.Fatal(err)
+	}
+
+	newVal, err := rdb.Get(context.Background(), key).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("Found key %s with value %s\n", key, newVal)
+	fmt.Println("Sleeping for 10 seconds")
+	time.Sleep(10 * time.Second)
+
+	newVal2, err := rdb.Get(context.Background(), key).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if newVal2 == newVal {
+		t.Fatalf("expected nil, got %s", newVal2)
+
+	}
+}
+
 func TestOfficialRedisClient(t *testing.T) {
 	listenaddr := ":5001"
 	server := NewServer(Config{
@@ -41,7 +84,7 @@ func TestOfficialRedisClient(t *testing.T) {
 	}
 
 	for key, val := range testCases {
-		if err := rdb.Set(context.Background(), key, val, 0).Err(); err != nil {
+		if err := rdb.Set(context.Background(), key, val, time.Minute).Err(); err != nil {
 			t.Fatal(err)
 		}
 
