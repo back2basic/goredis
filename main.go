@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"reflect"
 
 	"github.com/tidwall/resp"
 )
@@ -65,7 +66,7 @@ func (s *Server) Start() error {
 
 func (s *Server) handleMessage(msg Message) error {
 
-	// slog.Info("got message", "type", reflect.TypeOf(msg.cmd))
+	slog.Info("got message", "type", reflect.TypeOf(msg.cmd))
 	switch v := msg.cmd.(type) {
 	case ClientCommand:
 		if err := resp.
@@ -74,7 +75,7 @@ func (s *Server) handleMessage(msg Message) error {
 			return err
 		}
 	case SetCommand:
-		if err := s.kv.Set(v.key, v.val); err != nil {
+		if err := s.kv.Set(v.key, v.val, v.ttl); err != nil {
 			return err
 		}
 		if err := resp.

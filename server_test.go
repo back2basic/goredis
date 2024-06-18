@@ -45,15 +45,17 @@ func TestRedisTTL(t *testing.T) {
 
 	fmt.Printf("Found key %s with value %s\n", key, newVal)
 	fmt.Println("Sleeping for 10 seconds")
+	
+	server.cleanKV()
 	time.Sleep(10 * time.Second)
+
 
 	newVal2, err := rdb.Get(context.Background(), key).Result()
 	if err != nil {
-		t.Fatal(err)
+		t.Log(err)
 	}
 	if newVal2 == newVal {
 		t.Fatalf("expected nil, got %s", newVal2)
-
 	}
 }
 

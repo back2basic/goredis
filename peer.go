@@ -57,6 +57,7 @@ func (p *Peer) readLoop() error {
 				cmd = SetCommand{
 					key: v.Array()[1].Bytes(),
 					val: v.Array()[2].Bytes(),
+					ttl: v.Array()[3].Bytes(),
 				}
 			case CommandHELLO:
 				cmd = HelloCommand{

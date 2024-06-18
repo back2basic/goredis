@@ -18,7 +18,7 @@ func TestClientInputType(t *testing.T) {
 		log.Fatal(err)
 	}
 	defer c.Close()
-	if err := c.Set(context.TODO(), "foo", 1); err != nil {
+	if err := c.Set(context.TODO(), "foo", "1"); err != nil {
 		log.Fatal(err)
 	}
 	val, err := c.Get(context.TODO(), "foo")
